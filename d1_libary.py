@@ -1,13 +1,19 @@
 import time
 import ntptime
 import urequests
-from secret import openweather_api_key, city, lang, units
+import network
+from umqttsimple import MQTTClient
+from secret import *
 from pimoroni_i2c import PimoroniI2C
 from picographics import PicoGraphics, DISPLAY_LCD_240X240, PEN_P8
 from breakout_bme280 import BreakoutBME280
 from breakout_msa301 import BreakoutMSA301
+from machine import Pin
 
 PINS_BREAKOUT_GARDEN = {"sda": 4, "scl": 5}
+wlan = network.WLAN(network.STA_IF)
+wlan.active(True)
+wlan.connect(ssid, password)
 
 i2c = PimoroniI2C(**PINS_BREAKOUT_GARDEN)
 bme = BreakoutBME280(i2c)
@@ -17,15 +23,78 @@ display.set_backlight(1.0)
 display.set_font("bitmap8")
 WIDTH, HEIGHT = display.get_bounds()
 
-RED   = display.create_pen(255, 000, 000)    #Define some colors to use (R,G,B)
+RED   = display.create_pen(255, 000, 000)   
 GREEN = display.create_pen(000, 255, 000)
 BLUE  = display.create_pen(000, 000, 255)
 WHITE = display.create_pen(255, 255, 255)
 BLACK = display.create_pen(0, 0, 0)
 RAIN  = display.create_pen(56, 194, 231)
-Cloud = display.create_pen(157, 165, 167)
+CLOUD = display.create_pen(157, 165, 167)
+SUN = display.create_pen(252, 186, 3)
+
+#Button 1
+buttonPIN = 0
+button1 = Pin(buttonPIN, Pin.IN, Pin.PULL_UP)
+
+#Button 2
+buttonPIN = 1
+button2 = Pin(buttonPIN, Pin.IN, Pin.PULL_UP)
 
 run_once = 0
+
+### System ###
+
+class system:
+
+    ### WiFi ###
+    def wifi_connect(self):
+        wait = 10
+        while wait > 0:
+            if wlan.status() < 0 or wlan.status() >= 3:
+                break
+            wait -= 1
+            print('waiting for connection...')
+            time.sleep(1)
+         
+        # Handle connection error
+        if wlan.status() != 3:
+            raise RuntimeError('wifi connection failed')
+        else:
+            print('connected')
+            ip=wlan.ifconfig()[0]
+            print('IP: ', ip)
+            
+    ### MQTT ###   
+    def mqtt_connect(self):
+        """ Connect to the MQTT broker and subscribe to the topic"""
+        global client_id, mqtt_broker
+        
+        print(client_id, mqtt_broker)
+        client = MQTTClient(client_id, mqtt_broker, user=mqttusername, password=mqttpassword, keepalive=5000)
+        client.connect()
+        print('Connected to %s MQTT Broker'%(mqtt_broker))
+        
+        return client
+
+    def restart_reconnect(self):
+        global client
+        print('Failed to connect to MQTT broker, Reconnecting...')
+        sleep(10)
+        client = mqtt_connect()
+    
+    ### Get button values ###
+    def get_button1(self):
+        return not button1.value()
+    def get_button2(self):
+        return not button2.value()
+    
+    ### Button Functions ###
+    def button2_pressed(self):
+        client = func.mqtt_connect(self)
+        client.publish(switch3, topic_msg)
+        client.publish(switch4, topic_msg)
+        print("sent",topic_msg,"to",Button1)
+        time.sleep(2)
 
 ##### Functions ####
 
@@ -79,7 +148,7 @@ class func:
         get_time = time.localtime() #get time
         minute = "%02d"%(get_time[4:5])
         idletime = int(minute)
-        idletime = idletime + 1 #5
+        idletime = idletime + 5
         return idletime
 
     def current_time(self):
@@ -133,7 +202,7 @@ class func:
 
         ### Clouds ###
         if weather == "Clouds":
-            display.set_pen(Cloud)
+            display.set_pen(CLOUD)
             display.circle(30, 89, 15) #left
             display.circle(50, 80, 18) #middle
             display.circle(70, 92, 12) #right
@@ -143,7 +212,7 @@ class func:
             
         ### Rain ###
         if weather == "Rain":
-            display.set_pen(Cloud)
+            display.set_pen(CLOUD)
             display.circle(30, 89, 15) #left
             display.circle(50, 80, 18) #middle
             display.circle(70, 92, 12) #right
@@ -153,10 +222,25 @@ class func:
             display.line(50, 105, 45, 115, 5)
             #display.line(70, 155, 56, 175, 5)
             display.line(65, 105, 60, 115, 5)
+            display.text(str(rain1h)+"mm", 20, 140, scale=4)
             
-        #Clear
-        #Snow
-
+        ### Clear ###
+        if weather == "Clear":
+            display.set_pen(SUN)
+            display.circle(50, 89, 30)
+            
+        ### Snow ###
+        if weather == "Snow":
+            display.set_pen(Cloud)
+            display.circle(30, 89, 15) #left
+            display.circle(50, 80, 18) #middle
+            display.circle(70, 92, 12) #right
+            display.rectangle(30, 90, 40, 15)
+            display.set_pen(WHITE)
+            display.circle(35, 111, 5) #snow
+            display.circle(50, 125, 5) #snow
+            display.circle(65, 114, 5) #snow
+            display.text(str(snow1h)+"mm", 20, 140, scale=4)
         
         ### Temp Icon ###
         display.set_pen(WHITE)
@@ -179,6 +263,7 @@ class func:
     def reset_run_once(self):
         global run_once
         run_once = 0
+    
      
 ##### Emotions #####
 
