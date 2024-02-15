@@ -8,6 +8,7 @@ from pimoroni_i2c import PimoroniI2C
 from picographics import PicoGraphics, DISPLAY_LCD_240X240, PEN_P8
 from breakout_bme280 import BreakoutBME280
 from breakout_msa301 import BreakoutMSA301
+from breakout_rtc import BreakoutRTC
 from machine import Pin
 
 PINS_BREAKOUT_GARDEN = {"sda": 4, "scl": 5}
@@ -16,6 +17,7 @@ wlan.active(True)
 wlan.connect(ssid, password)
 
 i2c = PimoroniI2C(**PINS_BREAKOUT_GARDEN)
+rtc = BreakoutRTC(i2c)
 bme = BreakoutBME280(i2c)
 msa = BreakoutMSA301(i2c)
 display = PicoGraphics(display=DISPLAY_LCD_240X240, pen_type=PEN_P8)
@@ -41,6 +43,8 @@ buttonPIN = 1
 button2 = Pin(buttonPIN, Pin.IN, Pin.PULL_UP)
 
 run_once = 0
+
+rtc.enable_periodic_update_interrupt(True)
 
 ### System ###
 
@@ -129,33 +133,45 @@ class func:
         time.sleep(0.01)
         
     def showtime(self):
-        timestamp=time.localtime() #get time
-        hour="%02d:%02d"%(timestamp[3:5]) #format hour
-        date="%04d-%02d-%02d"%(timestamp[0:3]) # format date
-        year=(date[0:4]) #split year into own object
-        month=(date[5:7]) #split month into own object
-        day=(date[8:10]) #split date into own object
-            
-        display.set_pen(BLACK)
-        display.clear()
-        display.set_pen(WHITE)
-        display.text((hour), 60, 80, scale=6)
-        display.text((day + "-" + month +"-"+ year), 30, 150, scale=4) # assemble date in normal format
-        display.update()
-        time.sleep(0.01)
+        rtc_date = rtc.string_date()
+        rtc_time = rtc.string_time()
+        hour = rtc_time[:-3]
+        
+        if rtc.read_periodic_update_interrupt_flag():
+            rtc.clear_periodic_update_interrupt_flag()
+
+            if rtc.update_time():
+                display.set_pen(BLACK)
+                display.clear()
+                display.set_pen(WHITE)
+                display.text((hour), 60, 80, scale=6)
+                display.text((rtc_date), 25, 150, scale=4)
+                display.update()
+                time.sleep(0.01)
         
     def idle_time(self):
-        get_time = time.localtime() #get time
-        minute = "%02d"%(get_time[4:5])
-        idletime = int(minute)
-        idletime = idletime + 5
-        return idletime
+        time.sleep(1)
+        get_time = rtc.string_time()#get time
+        minute = get_time[3:5] #format hour
+        minute = int(minute)
+        idletime = minute + 5
+        
+        if rtc.read_periodic_update_interrupt_flag():
+            rtc.clear_periodic_update_interrupt_flag()
+
+            if rtc.update_time():
+                return idletime
 
     def current_time(self):
-        get_time = time.localtime() #get time
-        minute = "%02d"%(get_time[4:5]) #format hour
+        get_time = rtc.string_time()#get time
+        minute = get_time[3:5] #format hour
         minute = int(minute)
-        return minute
+        
+        if rtc.read_periodic_update_interrupt_flag():
+            rtc.clear_periodic_update_interrupt_flag()
+
+            if rtc.update_time():
+                return minute
             
     def weather_test(self):
         
@@ -610,3 +626,4 @@ class emote:
         self.happyblink()
         self.shocked()
         self.shockedblink()
+
