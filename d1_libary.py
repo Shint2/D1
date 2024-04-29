@@ -2,6 +2,8 @@ import time
 import ntptime
 import urequests
 import network
+import uping
+import machine
 from umqttsimple import MQTTClient
 from secret import *
 from pimoroni_i2c import PimoroniI2C
@@ -18,6 +20,7 @@ wlan.connect(ssid, password)
 
 i2c = PimoroniI2C(**PINS_BREAKOUT_GARDEN)
 rtc = BreakoutRTC(i2c)
+rtcpico = machine.RTC()
 bme = BreakoutBME280(i2c)
 msa = BreakoutMSA301(i2c)
 display = PicoGraphics(display=DISPLAY_LCD_240X240, pen_type=PEN_P8)
@@ -35,14 +38,33 @@ CLOUD = display.create_pen(157, 165, 167)
 SUN = display.create_pen(252, 186, 3)
 
 #Button 1
-buttonPIN = 0
+buttonPIN = 11
 button1 = Pin(buttonPIN, Pin.IN, Pin.PULL_UP)
 
 #Button 2
-buttonPIN = 1
+buttonPIN = 10
 button2 = Pin(buttonPIN, Pin.IN, Pin.PULL_UP)
 
+#Button 3
+buttonPIN = 12
+button3 = Pin(buttonPIN, Pin.IN, Pin.PULL_UP)
+
+#Button 4
+buttonPIN = 13
+button4 = Pin(buttonPIN, Pin.IN, Pin.PULL_UP)
+
+#Button 5
+buttonPIN = 14
+button5 = Pin(buttonPIN, Pin.IN, Pin.PULL_UP)
+
+#Button 6
+buttonPIN = 15
+button6 = Pin(buttonPIN, Pin.IN, Pin.PULL_UP)
+
 run_once = 0
+
+### Menu Page ###
+menu_page = 0
 
 rtc.enable_periodic_update_interrupt(True)
 
@@ -91,18 +113,64 @@ class system:
         return not button1.value()
     def get_button2(self):
         return not button2.value()
+    def get_button3(self):
+        return not button3.value()
+    def get_button4(self):
+        return not button4.value()
+    def get_button5(self):
+        return not button5.value()
+    def get_button6(self):
+        return not button6.value()
     
     ### Button Functions ###
-    def button2_pressed(self):
-        client = func.mqtt_connect(self)
-        client.publish(switch3, topic_msg)
-        client.publish(switch4, topic_msg)
-        print("sent",topic_msg,"to",Button1)
+    def button_press1(self):
+        global menu_page
+        menu_page += 1
+        time.sleep(1)
+    
+    def button_press2(self):
+        global menu_page
+        menu_page -= 1
+        time.sleep(1)
+    
+    def button_press3(self):
+        client = system.mqtt_connect(self)
+        client.publish(switch1, topic_msg)
+        client.publish(switch2, topic_msg)
+        print("sent",topic_msg,"to",switch1,"&",switch2)
         time.sleep(2)
+    
+    def button_press4(self):
+        client = system.mqtt_connect(self)
+        client.publish(switch3, topic_msg)
+        print("sent",topic_msg,"to",switch3)
+        time.sleep(2)
+    
+    def button_press5(self):
+        client = system.mqtt_connect(self)
+        client.publish(switch4, topic_msg)
+        print("sent",topic_msg,"to",switch4)
+        time.sleep(2)
+    
+    def button_press6(self):
+        func.set_time(self)
+
 
 ##### Functions ####
 
 class func:
+
+    def set_time(self):
+        # this sets up the battery switching mode on your breakout
+        rtc.setup()
+
+        print(f"Getting time from Pico RTC/Thonny: {rtcpico.datetime()}")
+        year, month, day, weekday, hour, minute, second, microsecond = rtcpico.datetime()
+
+        print("Setting the breakout RTC!")
+        rtc.set_time(second, minute, hour, weekday, day, month, year)
+
+        print(f"New breakout time: {rtc.string_date()} {rtc.string_time()}")
     
     def showtemp(self):
         temperature, pressure, humidity = bme.read()
@@ -173,7 +241,7 @@ class func:
             if rtc.update_time():
                 return minute
             
-    def weather_test(self):
+    def weather(self):
         
         global run_once
         global temp_out
@@ -204,10 +272,12 @@ class func:
             humidity_out = weather_data["main"]["humidity"]
             if "clouds" in weather_data:
                 cloud = weather_data["clouds"]["all"]
-            elif "rain" in weather_data:
-                rain1h = weather_data["rain"]["1h"]
-            elif "snow" in weather_data:
-                snow1h = weather_data["snow"]["1h"]
+                if "rain" in weather_data:
+                    rain_raw = weather_data["rain"]["1h"]
+                    rain1h = int(rain_raw)
+                if "snow" in weather_data:
+                    snow_raw = weather_data["snow"]["1h"]
+                    snow1h = int(snow_raw)
             run_once = 1
         
         display.set_pen(BLACK)
@@ -275,7 +345,229 @@ class func:
         
         display.update()
         time.sleep(0.01)
+    
+    def network_dash(self):
+        ping1 = uping.ping('192.168.0.1', quiet=True)
+        ping2 = uping.ping('192.168.0.11', quiet=True)
+        ping3 = uping.ping('192.168.0.13', quiet=True)
         
+        ping_time1 = str(ping1[2])
+        ping_time2 = str(ping2[2])
+        ping_time3 = str(ping3[2])
+        
+        display.set_pen(BLACK)
+        display.clear()
+
+        ### Ping 1 ###
+        display.set_pen(WHITE)
+        display.text("RMO", 30, 40, scale=5)
+        display.set_pen(GREEN)
+        display.text((ping_time1+"ms"), 35, 80, scale=4)
+            
+        ### Ping 2 ###
+        display.set_pen(WHITE)
+        display.text("BMO", 140, 40, scale=5)
+        display.set_pen(GREEN)
+        display.text((ping_time2+"ms"), 145, 80, scale=4)
+        
+        ### Ping 3 ###
+        display.set_pen(WHITE)
+        display.text("HMO", 30, 140, scale=5)
+        display.set_pen(GREEN)
+        display.text((ping_time3+"ms"), 35, 180, scale=4)
+        
+        ### Ping 1 Down ###
+        if ping1[1] == 0:
+            
+            display.set_pen(BLACK)
+            display.clear()
+            
+            ### Ping 1 ###
+            display.set_pen(WHITE)
+            display.text("RMO", 30, 40, scale=5)
+            display.set_pen(RED)
+            display.text("DOWN", 30, 80, scale=4)
+                
+            ### Ping 2 ###
+            display.set_pen(WHITE)
+            display.text("BMO", 140, 40, scale=5)
+            display.set_pen(GREEN)
+            display.text((ping_time2+"ms"), 145, 80, scale=4)
+            
+            ### Ping 3 ###
+            display.set_pen(WHITE)
+            display.text("HMO", 30, 140, scale=5)
+            display.set_pen(GREEN)
+            display.text((ping_time3+"ms"), 35, 180, scale=4)
+            
+            display.update()
+            time.sleep(0.01)
+        
+        ### Ping 2 Down ###
+        if ping2[1] == 0:
+            
+            display.set_pen(BLACK)
+            display.clear()
+            
+            ### Ping 1 ###
+            display.set_pen(WHITE)
+            display.text("RMO", 30, 40, scale=5)
+            display.set_pen(GREEN)
+            display.text((ping_time1+"ms"), 35, 80, scale=4)
+                
+            ### Ping 2 ###
+            display.set_pen(WHITE)
+            display.text("BMO", 140, 40, scale=5)
+            display.set_pen(RED)
+            display.text(("DOWN"), 140, 80, scale=4)
+            
+            ### Ping 3 ###
+            display.set_pen(WHITE)
+            display.text("HMO", 30, 140, scale=5)
+            display.set_pen(GREEN)
+            display.text((ping_time3+"ms"), 35, 180, scale=4)
+            
+            display.update()
+            time.sleep(0.01)
+        
+        ### Ping 3 Down ###
+        if ping3[1] == 0:
+            
+            display.set_pen(BLACK)
+            display.clear()
+            
+            ### Ping 1 ###
+            display.set_pen(WHITE)
+            display.text("RMO", 30, 40, scale=5)
+            display.set_pen(GREEN)
+            display.text((ping_time1+"ms"), 35, 80, scale=4)
+                
+            ### Ping 2 ###
+            display.set_pen(WHITE)
+            display.text("BMO", 140, 40, scale=5)
+            display.set_pen(GREEN)
+            display.text((ping_time2+"ms"), 145, 80, scale=4)
+            
+            ### Ping 3 ###
+            display.set_pen(WHITE)
+            display.text("HMO", 30, 140, scale=5)
+            display.set_pen(RED)
+            display.text("DOWN", 30, 180, scale=4)
+            
+            display.update()
+            time.sleep(0.01)
+
+        ### Ping 1 and 2 Down ###
+        if ping1[1] == 0 and ping2[1] == 0:
+                        
+            display.set_pen(BLACK)
+            display.clear()
+            
+            ### Ping 1 ###
+            display.set_pen(WHITE)
+            display.text("RMO", 30, 40, scale=5)
+            display.set_pen(RED)
+            display.text(("DOWN"), 30, 80, scale=4)
+                
+            ### Ping 2 ###
+            display.set_pen(WHITE)
+            display.text("BMO", 140, 40, scale=5)
+            display.set_pen(RED)
+            display.text(("DOWN"), 140, 80, scale=4)
+            
+            ### Ping 3 ###
+            display.set_pen(WHITE)
+            display.text("HMO", 30, 140, scale=5)
+            display.set_pen(GREEN)
+            display.text((ping_time3+"ms"), 35, 180, scale=4)
+            
+            display.update()
+            time.sleep(0.01)
+
+        ### Ping 1 and 3 Down ###
+        if ping1[1] == 0 and ping3[1] == 0:
+                        
+            display.set_pen(BLACK)
+            display.clear()
+            
+            ### Ping 1 ###
+            display.set_pen(WHITE)
+            display.text("RMO", 30, 40, scale=5)
+            display.set_pen(RED)
+            display.text(("DOWN"), 30, 80, scale=4)
+                
+            ### Ping 2 ###
+            display.set_pen(WHITE)
+            display.text("BMO", 140, 40, scale=5)
+            display.set_pen(GREEN)
+            display.text((ping_time2+"ms"), 145, 80, scale=4)
+            
+            ### Ping 3 ###
+            display.set_pen(WHITE)
+            display.text("HMO", 30, 140, scale=5)
+            display.set_pen(RED)
+            display.text(("DOWN"), 30, 180, scale=4)
+            
+            display.update()
+            time.sleep(0.01)
+
+        ### Ping 2 and 3 Down ###
+        if ping2[1] == 0 and ping3[1] == 0:
+                        
+            display.set_pen(BLACK)
+            display.clear()
+            
+            ### Ping 1 ###
+            display.set_pen(WHITE)
+            display.text("RMO", 30, 40, scale=5)
+            display.set_pen(GREEN)
+            display.text((ping_time1+"ms"), 35, 80, scale=4)
+                
+            ### Ping 2 ###
+            display.set_pen(WHITE)
+            display.text("BMO", 140, 40, scale=5)
+            display.set_pen(RED)
+            display.text(("DOWN"), 140, 80, scale=4)
+            
+            ### Ping 3 ###
+            display.set_pen(WHITE)
+            display.text("HMO", 30, 140, scale=5)
+            display.set_pen(RED)
+            display.text(("DOWN"), 30, 180, scale=4)
+            
+            display.update()
+            time.sleep(0.01)
+
+        ### Ping 1, 2 and 3 Down ###
+        if ping1[1] == 0 and ping2[1] == 0 and ping3[1] == 0 :
+                                
+            display.set_pen(BLACK)
+            display.clear()
+            
+            ### Ping 1 ###
+            display.set_pen(WHITE)
+            display.text("RMO", 30, 40, scale=5)
+            display.set_pen(RED)
+            display.text(("DOWN"), 30, 80, scale=4)
+                
+            ### Ping 2 ###
+            display.set_pen(WHITE)
+            display.text("BMO", 140, 40, scale=5)
+            display.set_pen(RED)
+            display.text(("DOWN"), 140, 80, scale=4)
+            
+            ### Ping 3 ###
+            display.set_pen(WHITE)
+            display.text("HMO", 30, 140, scale=5)
+            display.set_pen(RED)
+            display.text(("DOWN"), 30, 180, scale=4)
+            
+            display.update()
+            time.sleep(0.01)
+
+        display.update()
+        time.sleep(0.01)
+
     def reset_run_once(self):
         global run_once
         run_once = 0
@@ -626,4 +918,3 @@ class emote:
         self.happyblink()
         self.shocked()
         self.shockedblink()
-
