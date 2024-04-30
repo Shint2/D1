@@ -144,3 +144,6 @@ while True:
         d1_libary.menu_page = 0
         idler_ran = 0
         func.reset_run_once()
+
+    if d1_libary.menu_page == -1:
+        d1_libary.menu_page = 4
