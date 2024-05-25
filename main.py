@@ -96,6 +96,7 @@ while True:
             system.button_press6()
             
     while d1_libary.menu_page == 2: 
+        func.reset_run_once()
         func.showtemp()
         while system.get_button1() == 1:
             system.button_press1()
@@ -126,6 +127,7 @@ while True:
             system.button_press6()
 
     while d1_libary.menu_page == 4: 
+        func.reset_run_once()
         func.network_dash()
         while system.get_button1() == 1:
             system.button_press1()
@@ -147,3 +149,4 @@ while True:
 
     if d1_libary.menu_page == -1:
         d1_libary.menu_page = 4
+        func.reset_run_once()
