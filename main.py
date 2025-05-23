@@ -36,8 +36,8 @@ system.mqtt_connect()
 while True:
     
     while d1_libary.menu_page == 0: 
-        func.current_time()
-        minute = func.current_time()
+        func.current_time_minutes()
+        minute = func.current_time_minutes()
     
         if str(msa.get_orientation()) != "1" : # if moved shocked face
             emote.shockedblink()
@@ -96,6 +96,7 @@ while True:
             system.button_press6()
             
     while d1_libary.menu_page == 2: 
+        func.reset_run_once()
         func.showtemp()
         while system.get_button1() == 1:
             system.button_press1()
@@ -126,7 +127,15 @@ while True:
             system.button_press6()
 
     while d1_libary.menu_page == 4: 
-        func.network_dash()
+        func.current_time_full()
+        ctime = func.current_time_full()
+        sleeptime = "23:00"
+        waketime = "9:00"
+        
+        
+        while ctime == sleeptime: 
+            func.routiner_sleep()
+        
         while system.get_button1() == 1:
             system.button_press1()
         while system.get_button2() == 1:
@@ -143,4 +152,8 @@ while True:
     if d1_libary.menu_page == 5:
         d1_libary.menu_page = 0
         idler_ran = 0
+        func.reset_run_once()
+
+    if d1_libary.menu_page == -1:
+        d1_libary.menu_page = 4
         func.reset_run_once()

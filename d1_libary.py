@@ -4,6 +4,9 @@ import urequests
 import network
 import uping
 import machine
+import socket
+import time
+import struct
 from umqttsimple import MQTTClient
 from secret import *
 from pimoroni_i2c import PimoroniI2C
@@ -19,10 +22,12 @@ wlan.active(True)
 wlan.connect(ssid, password)
 
 i2c = PimoroniI2C(**PINS_BREAKOUT_GARDEN)
-rtc = BreakoutRTC(i2c)
-rtcpico = machine.RTC()
 bme = BreakoutBME280(i2c)
 msa = BreakoutMSA301(i2c)
+rtc = BreakoutRTC(i2c)
+rtcpico = machine.RTC()
+NTP_DELTA = 2208988800 - 3600
+time_host = "pool.ntp.org"
 display = PicoGraphics(display=DISPLAY_LCD_240X240, pen_type=PEN_P8)
 display.set_backlight(1.0)
 display.set_font("bitmap8")
@@ -161,6 +166,21 @@ class system:
 class func:
 
     def set_time(self):
+        NTP_QUERY = bytearray(48)
+        NTP_QUERY[0] = 0x1B
+        addr = socket.getaddrinfo(time_host, 123)[0][-1]
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            s.settimeout(1)
+            res = s.sendto(NTP_QUERY, addr)
+            msg = s.recv(48)
+        finally:
+            s.close()
+        val = struct.unpack("!I", msg[40:44])[0]
+        t = val - NTP_DELTA    
+        tm = time.gmtime(t)
+        machine.RTC().datetime((tm[0], tm[1], tm[2], tm[6] + 1, tm[3] - 1, tm[4], tm[5], 0))
+        
         # this sets up the battery switching mode on your breakout
         rtc.setup()
 
@@ -230,7 +250,7 @@ class func:
             if rtc.update_time():
                 return idletime
 
-    def current_time(self):
+    def current_time_minutes(self):
         get_time = rtc.string_time()#get time
         minute = get_time[3:5] #format hour
         minute = int(minute)
@@ -240,6 +260,17 @@ class func:
 
             if rtc.update_time():
                 return minute
+    
+    def current_time_full(self):
+        rtc_date = rtc.string_date()
+        rtc_time = rtc.string_time()
+        hour = rtc_time[:-3]
+        
+        if rtc.read_periodic_update_interrupt_flag():
+            rtc.clear_periodic_update_interrupt_flag()
+
+            if rtc.update_time():
+                return hour
             
     def weather(self):
         
@@ -572,6 +603,11 @@ class func:
         global run_once
         run_once = 0
     
+    def routiner_sleep(self):
+        print("Sleep")
+        
+    def routiner_wake(self):
+        print("Wake")
      
 ##### Emotions #####
 
@@ -918,3 +954,4 @@ class emote:
         self.happyblink()
         self.shocked()
         self.shockedblink()
+
