@@ -179,7 +179,7 @@ class func:
         val = struct.unpack("!I", msg[40:44])[0]
         t = val - NTP_DELTA    
         tm = time.gmtime(t)
-        machine.RTC().datetime((tm[0], tm[1], tm[2], tm[6] + 1, tm[3] - 1, tm[4], tm[5], 0))
+        machine.RTC().datetime((tm[0], tm[1], tm[2], tm[6] + 1, tm[3], tm[4], tm[5], 0))
         
         # this sets up the battery switching mode on your breakout
         rtc.setup()
@@ -250,7 +250,7 @@ class func:
             if rtc.update_time():
                 return idletime
 
-    def current_time_minutes(self):
+    def current_time(self):
         get_time = rtc.string_time()#get time
         minute = get_time[3:5] #format hour
         minute = int(minute)
@@ -260,17 +260,6 @@ class func:
 
             if rtc.update_time():
                 return minute
-    
-    def current_time_full(self):
-        rtc_date = rtc.string_date()
-        rtc_time = rtc.string_time()
-        hour = rtc_time[:-3]
-        
-        if rtc.read_periodic_update_interrupt_flag():
-            rtc.clear_periodic_update_interrupt_flag()
-
-            if rtc.update_time():
-                return hour
             
     def weather(self):
         
@@ -603,11 +592,6 @@ class func:
         global run_once
         run_once = 0
     
-    def routiner_sleep(self):
-        print("Sleep")
-        
-    def routiner_wake(self):
-        print("Wake")
      
 ##### Emotions #####
 
@@ -954,4 +938,3 @@ class emote:
         self.happyblink()
         self.shocked()
         self.shockedblink()
-
