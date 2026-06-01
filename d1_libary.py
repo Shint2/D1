@@ -179,14 +179,15 @@ class func:
         val = struct.unpack("!I", msg[40:44])[0]
         t = val - NTP_DELTA    
         tm = time.gmtime(t)
-
+        
+        #machine.RTC().datetime((tm[0], tm[1], tm[2], tm[6] + 1, tm[3] - 1, tm[4], tm[5], 0))
         machine.RTC().datetime((tm[0], tm[1], tm[2], tm[6], tm[3], tm[4], tm[5], 0))
         
         # this sets up the battery switching mode on your breakout
         rtc.setup()
 
-        print(f"Getting time from Pico RTC/Thonny: {rtcpico.now()}")
-        year, month, day, weekday, hour, minute, second, microsecond = rtcpico.now()
+        print(f"Getting time from Pico RTC/Thonny: {rtcpico.datetime()}")
+        year, month, day, weekday, hour, minute, second, microsecond = rtcpico.datetime()
 
         print("Setting the breakout RTC!")
         rtc.set_time(second, minute, hour, weekday, day, month, year)
