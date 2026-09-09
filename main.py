@@ -42,17 +42,17 @@ while True:
         if str(msa.get_orientation()) != "1" : # if moved shocked face
             emote.shockedblink()
         
-        while system.get_button1() == 1: 
+        if system.get_button1() == 1: 
             system.button_press1()
-        while system.get_button2() == 1:
+        if system.get_button2() == 1:
             system.button_press2()
-        while system.get_button3() == 1:
+        if system.get_button3() == 1:
             system.button_press3()
-        while system.get_button4() == 1:
+        if system.get_button4() == 1:
             system.button_press4()
-        while system.get_button5() == 1:
+        if system.get_button5() == 1:
             system.button_press5()
-        while system.get_button6() == 1:
+        if system.get_button6() == 1:
             system.button_press6()
             
         if idler_ran == 0:
