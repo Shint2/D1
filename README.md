@@ -10,10 +10,10 @@ D1 is a desk clock that can do more than just tell the time! It can show you the
 
 Its PCB design uses breakout board connectors so that you can add or remove any modules you like (provided you modify the code). 
 
-I am using the below breakout modules
+I am using the below breakout modules:
 
-* **MSA301 3DoF Motion Sensor**
-* **RV3028 Real-Time Clock**
-* **BME280 Temperature Sensor**
+* **[MSA301 3DoF Motion Sensor](https://shop.pimoroni.com/products/msa301-3dof-motion-sensor-breakout)**
+* **[RV3028 Real-Time Clock](https://shop.pimoroni.com/products/rv3028-real-time-clock-rtc-breakout?variant=27926940549203)**
+* **[BME280 Temperature Sensor](https://shop.pimoroni.com/products/bme280-breakout?variant=29420960677971)**
 
 
