@@ -23,6 +23,6 @@ I am using the below breakout modules:
 * **Interchangable breakout sensor modules**
 * **Control smart switches via MQTT**
 * **Show ambient temperature and humidity**
-* **Emotions! if you pickup D1 they will be shocked by the sudden movement. They also get sleepy**
+* **Emotions! If you pickup D1 they will be shocked by the sudden movement. They also get sleepy**
 
 ![Sleep time](images/D1-sleep.jpg)
