@@ -26,3 +26,4 @@ I am using the below breakout modules:
 * **Emotions! If you pickup D1 they will be shocked by the sudden movement. They also get sleepy**
 
 ![Sleep time](images/D1-sleep.jpg)
+![Face](images/D1-face.jpg)
