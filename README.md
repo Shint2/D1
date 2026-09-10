@@ -16,4 +16,13 @@ I am using the below breakout modules:
 * **[RV3028 Real-Time Clock](https://shop.pimoroni.com/products/rv3028-real-time-clock-rtc-breakout?variant=27926940549203)**
 * **[BME280 Temperature Sensor](https://shop.pimoroni.com/products/bme280-breakout?variant=29420960677971)**
 
+## Features
 
+* **Tell the time duhh**
+* **Intergrates with openweatherapi to show the weather**
+* **Interchangable breakout sensor modules**
+* **Control smart switches via MQTT**
+* **Show ambient temperature and humidity**
+* **Emotions! if you pickup D1 they will be shocked by the sudden movement. They also get sleepy**
+
+![Sleep time](D1-sleep.jpg)

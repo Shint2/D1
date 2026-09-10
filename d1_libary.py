@@ -5,7 +5,6 @@ import network
 import uping
 import machine
 import socket
-import time
 import struct
 from umqttsimple import MQTTClient
 from secret import *
