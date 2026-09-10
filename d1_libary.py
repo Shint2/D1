@@ -262,17 +262,6 @@ class func:
 
             if rtc.update_time():
                 return minute
-    
-    def current_time_full(self):
-        rtc_date = rtc.string_date()
-        rtc_time = rtc.string_time()
-        hour = rtc_time[:-3]
-        
-        if rtc.read_periodic_update_interrupt_flag():
-            rtc.clear_periodic_update_interrupt_flag()
-
-            if rtc.update_time():
-                return hour
             
     def weather(self):
         
@@ -604,12 +593,6 @@ class func:
     def reset_run_once(self):
         global run_once
         run_once = 0
-    
-    def routiner_sleep(self):
-        print("Sleep")
-        
-    def routiner_wake(self):
-        print("Wake")
      
 ##### Emotions #####
 

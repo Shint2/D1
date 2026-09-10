@@ -125,31 +125,8 @@ while True:
             system.button_press5()
         while system.get_button6() == 1:
             system.button_press6()
-
-    while d1_libary.menu_page == 4: 
-        func.current_time_full()
-        ctime = func.current_time_full()
-        sleeptime = "23:00"
-        waketime = "9:00"
-        
-        
-        while ctime == sleeptime: 
-            func.routiner_sleep()
-        
-        while system.get_button1() == 1:
-            system.button_press1()
-        while system.get_button2() == 1:
-            system.button_press2()
-        while system.get_button3() == 1:
-            system.button_press3()
-        while system.get_button4() == 1:
-            system.button_press4()
-        while system.get_button5() == 1:
-            system.button_press5()
-        while system.get_button6() == 1:
-            system.button_press6()
     
-    if d1_libary.menu_page == 5:
+    if d1_libary.menu_page == 4:
         d1_libary.menu_page = 0
         idler_ran = 0
         func.reset_run_once()
