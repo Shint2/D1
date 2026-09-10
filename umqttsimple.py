@@ -1,3 +1,8 @@
+# micropython-lib
+# Copyright (c) 2013, 2014 micropython-lib contributors
+# License: MIT
+# https://github.com/micropython/micropython-lib/
+
 import usocket as socket
 import ustruct as struct
 from ubinascii import hexlify
