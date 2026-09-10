@@ -2,11 +2,9 @@ import time
 import ntptime
 import urequests
 import network
-import uping
 import machine
 import socket
 import struct
-from umqttsimple import MQTTClient
 from secret import *
 from pimoroni_i2c import PimoroniI2C
 from picographics import PicoGraphics, DISPLAY_LCD_240X240, PEN_P8
@@ -93,11 +91,14 @@ class system:
             print('connected')
             ip=wlan.ifconfig()[0]
             print('IP: ', ip)
+            import mip
+            mip.install("umqtt.simple")
             
     ### MQTT ###   
     def mqtt_connect(self):
         """ Connect to the MQTT broker and subscribe to the topic"""
         global client_id, mqtt_broker
+        from umqtt.simple import MQTTClient
         
         print(client_id, mqtt_broker)
         client = MQTTClient(client_id, mqtt_broker, user=mqttusername, password=mqttpassword, keepalive=5000)
@@ -955,4 +956,5 @@ class emote:
         self.happyblink()
         self.shocked()
         self.shockedblink()
+
 

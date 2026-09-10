@@ -27,7 +27,3 @@ I am using the below breakout modules:
 
 ![Sleep time](images/D1-sleep.jpg)
 ![Face](images/D1-face.jpg)
-
-### Credits
-
-- [micropython-lib](https://github.com/micropython/micropython-lib/): For their simple MQTT client for MicroPython [umqttsimple.py](umqttsimple.py)
