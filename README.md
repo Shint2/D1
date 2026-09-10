@@ -25,4 +25,4 @@ I am using the below breakout modules:
 * **Show ambient temperature and humidity**
 * **Emotions! if you pickup D1 they will be shocked by the sudden movement. They also get sleepy**
 
-![Sleep time](D1-sleep.jpg)
+![Sleep time](images/D1-sleep.jpg)
